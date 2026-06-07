@@ -91,8 +91,11 @@
                      item.matchedWith ? 'border-anime-primary bg-anime-primary/5 text-anime-dark' : 'border-dashed border-gray-300 bg-gray-50 text-gray-400'
                    ]">
                 <span>{{ item.text }}</span>
-                <span v-if="item.matchedWith" class="text-anime-primary text-base md:text-xl font-sans bg-white px-2 md:px-3 py-1 rounded-lg border border-anime-primary/20 shadow-sm truncate max-w-[60%] text-right">
-                  {{ item.matchedWith.text }}
+                <span v-if="item.matchedWith" 
+                      @click="removeItem(item)"
+                      class="text-anime-primary text-base md:text-xl font-sans bg-white px-2 md:px-3 py-1 rounded-lg border border-anime-primary/20 shadow-sm truncate max-w-[60%] text-right cursor-pointer hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors flex items-center gap-1 group">
+                  {{ item.matchedWith.text }} 
+                  <span class="text-xs opacity-50 group-hover:opacity-100 group-hover:text-red-500">✕</span>
                 </span>
               </div>
             </div>
@@ -390,6 +393,15 @@ const onDrop = (e, targetItem) => {
   if (leftItem) leftItem.matched = true
   
   draggedItem.value = null
+}
+
+const removeItem = (targetItem) => {
+  if (isChecked.value) return;
+  if (targetItem.matchedWith) {
+    const leftItem = matchLeftItems.value.find(l => l.id === targetItem.matchedWith.id)
+    if (leftItem) leftItem.matched = false
+    targetItem.matchedWith = null
+  }
 }
 
 const checkAnswer = () => {

@@ -10,15 +10,15 @@
     <div class="container mx-auto px-4 pt-20 pb-32 relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
       
       <div class="md:w-1/2 space-y-6 text-center md:text-left">
-        <div class="inline-block bg-white px-4 py-2 rounded-full shadow-sm text-sm font-bold text-anime-primary mb-4 border border-anime-primary/20 overflow-hidden text-left h-9 flex items-center min-w-[320px]">
-          <span class="anime-typing font-jp inline-block opacity-100">日本語を学ぼう！ Belajar tu mudah lho~</span>
+        <div class="bg-white px-5 py-2.5 rounded-full shadow-sm text-sm md:text-base font-bold text-anime-primary mb-4 border border-anime-primary/20 text-left inline-flex items-center w-fit max-w-full min-h-[2.5rem]">
+          <span class="anime-typing font-jp opacity-100">日本語を学ぼう！ Belajar itu mudah lho~</span>
         </div>
         <h1 class="text-5xl md:text-7xl font-black text-anime-dark leading-tight font-jp">
           Belajar Bahasa Jepang <br>
           <span class="text-transparent bg-clip-text bg-gradient-to-r from-anime-primary to-anime-secondary animate-pulse">Lebih Seru!</span>
         </h1>
         <p class="text-lg text-gray-600 max-w-xl mx-auto md:mx-0">
-          Kuasai Hiragana, Katakana, dan Kanji dengan antarmuka yang interaktif, menantang.
+          Kuasai Hiragana, Katakana, dan Kanji dengan antarmuka yang interaktif dan menantang.
         </p>
         <div class="pt-4">
           <NuxtLink to="/courses" class="inline-block bg-anime-primary hover:bg-anime-primary/90 text-white font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-anime-primary/50 transition-all transform hover:-translate-y-1 text-lg">
@@ -54,7 +54,7 @@
               🎮
             </div>
             <h3 class="text-2xl font-bold text-anime-dark mb-3">Super Interaktif</h3>
-            <p class="text-gray-600 leading-relaxed">Ucapkan selamat tinggal pada belajar membosankan! Praktik langsung dengan fitur <span class="font-bold text-anime-primary">drag-and-drop</span> dan kuis cepat yang menantang adrenalinmu.</p>
+            <p class="text-gray-600 leading-relaxed">Ucapkan selamat tinggal pada cara belajar yang membosankan! Praktik langsung dengan fitur <span class="font-bold text-anime-primary">drag-and-drop</span> dan kuis cepat yang menantang adrenalinmu.</p>
           </div>
 
           <!-- Fitur 2 -->
@@ -92,7 +92,7 @@ onMounted(async () => {
   const anime = animeModule.default || animeModule;
 
   const texts = [
-    "日本語を学ぼう！ Belajar tu mudah lho~",
+    "日本語を学ぼう！ Belajar itu mudah lho~",
     "頑張って！ (Ganbatte!) Semangat belajarnya!",
     "諦めないで！ (Akiramenaide!) Jangan menyerah!"
   ];
@@ -105,29 +105,37 @@ onMounted(async () => {
     // Reset opacity to 1 because the animation sets it to 0 at the end
     textWrapper.style.opacity = 1;
     textWrapper.textContent = texts[currentIndex];
-    textWrapper.innerHTML = textWrapper.textContent.replace(/\S/g, "<span class='letter inline-block opacity-0'>$&</span>");
+    textWrapper.innerHTML = textWrapper.textContent.replace(/\S/g, "<span class='letter inline-block'>$&</span>");
 
-    anime.timeline({
-      complete: () => {
+    try {
+      anime.timeline({
+        complete: () => {
+          currentIndex = (currentIndex + 1) % texts.length;
+          animateText();
+        }
+      })
+        .add({
+          targets: '.anime-typing .letter',
+          scale: [3, 1],
+          opacity: [0, 1],
+          translateZ: 0,
+          easing: "easeOutExpo",
+          duration: 800,
+          delay: (el, i) => 50 * i
+        }).add({
+          targets: '.anime-typing',
+          opacity: [1, 0],
+          duration: 1000,
+          easing: "easeOutExpo",
+          delay: 3000
+        });
+    } catch (e) {
+      console.error("AnimeJS animation failed", e);
+      setTimeout(() => {
         currentIndex = (currentIndex + 1) % texts.length;
         animateText();
-      }
-    })
-      .add({
-        targets: '.anime-typing .letter',
-        scale: [3, 1],
-        opacity: [0, 1],
-        translateZ: 0,
-        easing: "easeOutExpo",
-        duration: 800,
-        delay: (el, i) => 50 * i
-      }).add({
-        targets: '.anime-typing',
-        opacity: 0,
-        duration: 1000,
-        easing: "easeOutExpo",
-        delay: 3000
-      });
+      }, 4000);
+    }
   };
 
   animateText();
