@@ -43,14 +43,14 @@
         <h2 class="text-2xl font-bold text-gray-800 mb-8 font-jp">{{ currentQuestion.prompt }}</h2>
 
         <div v-if="currentQuestion.type === 'mcq'" class="flex flex-col items-center">
-          <div class="text-8xl font-black text-anime-dark mb-12 font-jp">{{ currentQuestion.target.char }}</div>
+          <div class="text-7xl md:text-8xl font-black text-anime-dark mb-8 md:mb-12 font-jp">{{ currentQuestion.target.char }}</div>
           
-          <div class="grid grid-cols-2 gap-4 w-full">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 w-full">
             <button v-for="(opt, idx) in currentQuestion.options" :key="idx"
                     @click="selectOption(opt)"
                     :disabled="isChecked"
                     :class="[
-                      'p-6 rounded-2xl border-2 text-xl font-bold transition-all text-center uppercase tracking-widest',
+                      'p-4 md:p-6 rounded-2xl border-2 text-lg md:text-xl font-bold transition-all text-center uppercase tracking-widest',
                       selectedAnswer === opt && !isChecked ? 'border-anime-primary bg-anime-primary/10 text-anime-primary' : '',
                       selectedAnswer !== opt && !isChecked ? 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50' : '',
                       isChecked && opt === currentQuestion.target.romaji ? 'border-green-500 bg-green-100 text-green-700' : '',
@@ -63,31 +63,35 @@
         </div>
 
         <div v-if="currentQuestion.type === 'match'" class="w-full">
-          <p class="text-gray-500 mb-6 italic text-center">Drag kotak sebelah kiri ke dalam kotak kosong sebelah kanan untuk mencocokkan.</p>
-          <div class="flex justify-between gap-8">
-            <div class="flex flex-col gap-4 w-1/2">
+          <p class="text-gray-500 mb-4 md:mb-6 italic text-center text-sm md:text-base">Drag kotak sebelah kiri ke dalam kotak kosong sebelah kanan untuk mencocokkan.</p>
+          <div class="flex justify-between gap-3 md:gap-8">
+            <div class="flex flex-col gap-3 md:gap-4 w-1/2">
               <div v-for="item in matchLeftItems" :key="item.id"
                    :draggable="!item.matched && !isChecked"
                    @dragstart="onDragStart($event, item)"
+                   @touchstart="onTouchStart($event, item)"
+                   @touchmove="onTouchMove"
+                   @touchend="onTouchEnd"
                    :class="[
-                     'p-4 rounded-xl border-2 text-center font-bold text-xl uppercase transition-all',
-                     item.matched ? 'opacity-0 invisible' : 'border-gray-300 bg-white cursor-grab active:cursor-grabbing hover:bg-gray-50 text-gray-700 shadow-sm'
+                     'p-3 md:p-4 rounded-xl border-2 text-center font-bold text-base md:text-xl uppercase transition-all select-none',
+                     item.matched ? 'opacity-0 invisible' : 'border-gray-300 bg-white cursor-grab active:cursor-grabbing hover:bg-gray-50 text-gray-700 shadow-sm touch-none'
                    ]">
                 {{ item.text }}
               </div>
             </div>
 
-            <div class="flex flex-col gap-4 w-1/2">
+            <div class="flex flex-col gap-3 md:gap-4 w-1/2">
               <div v-for="item in matchRightItems" :key="item.id"
+                   :data-id="item.id"
                    @dragover.prevent
                    @dragenter.prevent
                    @drop="onDrop($event, item)"
                    :class="[
-                     'p-4 rounded-xl border-2 flex items-center justify-between text-2xl font-bold font-jp transition-all',
+                     'drop-zone p-3 md:p-4 rounded-xl border-2 flex items-center justify-between text-xl md:text-2xl font-bold font-jp transition-all min-h-[64px]',
                      item.matchedWith ? 'border-anime-primary bg-anime-primary/5 text-anime-dark' : 'border-dashed border-gray-300 bg-gray-50 text-gray-400'
                    ]">
                 <span>{{ item.text }}</span>
-                <span v-if="item.matchedWith" class="text-anime-primary text-xl font-sans bg-white px-3 py-1 rounded-lg border border-anime-primary/20 shadow-sm">
+                <span v-if="item.matchedWith" class="text-anime-primary text-base md:text-xl font-sans bg-white px-2 md:px-3 py-1 rounded-lg border border-anime-primary/20 shadow-sm truncate max-w-[60%] text-right">
                   {{ item.matchedWith.text }}
                 </span>
               </div>
@@ -100,21 +104,21 @@
         'fixed bottom-0 left-0 right-0 border-t-2 p-4 transition-colors duration-300 z-50',
         !isChecked ? 'bg-white border-gray-200' : isCorrect ? 'bg-green-100 border-green-200' : 'bg-red-100 border-red-200'
       ]">
-        <div class="container mx-auto max-w-4xl flex items-center justify-between">
+        <div class="container mx-auto max-w-4xl flex flex-col md:flex-row items-center justify-between gap-4">
           
-          <div class="flex items-center gap-4">
-            <div v-if="isChecked && isCorrect" class="text-green-600 flex items-center gap-3">
-              <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl shadow-sm">✓</div>
+          <div class="flex items-center gap-3 md:gap-4 w-full md:w-auto justify-center md:justify-start">
+            <div v-if="isChecked && isCorrect" class="text-green-600 flex items-center gap-2 md:gap-3">
+              <div class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-xl md:text-2xl shadow-sm">✓</div>
               <div>
-                <p class="font-black text-xl">Luar Biasa!</p>
+                <p class="font-black text-lg md:text-xl">Luar Biasa!</p>
               </div>
             </div>
-            <div v-if="isChecked && !isCorrect" class="text-red-600 flex items-center gap-3">
-              <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl shadow-sm">✗</div>
+            <div v-if="isChecked && !isCorrect" class="text-red-600 flex items-center gap-2 md:gap-3">
+              <div class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-xl md:text-2xl shadow-sm">✗</div>
               <div>
-                <p class="font-black text-xl">Kurang Tepat.</p>
-                <p v-if="currentQuestion.type === 'mcq'" class="text-sm font-medium opacity-80 mt-1">Jawaban benar: {{ currentQuestion.target.romaji }}</p>
-                <p v-else class="text-sm font-medium opacity-80 mt-1">Periksa kembali cocokanmu.</p>
+                <p class="font-black text-lg md:text-xl">Kurang Tepat.</p>
+                <p v-if="currentQuestion.type === 'mcq'" class="text-xs md:text-sm font-medium opacity-80 mt-0.5 md:mt-1">Jawaban benar: {{ currentQuestion.target.romaji }}</p>
+                <p v-else class="text-xs md:text-sm font-medium opacity-80 mt-0.5 md:mt-1">Periksa kembali cocokanmu.</p>
               </div>
             </div>
           </div>
@@ -123,7 +127,7 @@
                   @click="checkAnswer"
                   :disabled="!canCheck"
                   :class="[
-                    'px-10 py-3 rounded-2xl font-bold text-lg transition-all shadow-sm',
+                    'w-full md:w-auto px-8 md:px-10 py-3 rounded-2xl font-bold text-lg transition-all shadow-sm',
                     canCheck ? 'bg-green-500 hover:bg-green-600 text-white hover:-translate-y-1 hover:shadow-md' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   ]">
             Periksa
@@ -131,7 +135,7 @@
           <button v-else
                   @click="nextQuestion"
                   :class="[
-                    'px-10 py-3 rounded-2xl font-bold text-lg text-white transition-all hover:-translate-y-1 hover:shadow-md shadow-sm',
+                    'w-full md:w-auto px-8 md:px-10 py-3 rounded-2xl font-bold text-lg text-white transition-all hover:-translate-y-1 hover:shadow-md shadow-sm',
                     isCorrect ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
                   ]">
             Lanjutkan
@@ -211,16 +215,17 @@ const generateQuestions = () => {
   if (allData.length === 0) return []
   
   const qs = []
-  const pool = shuffle(allData).slice(0, 10)
+  const pool = shuffle(allData)
   
-  qs.push(createMCQ(pool[0], allData))
-  qs.push(createMCQ(pool[1], allData))
-  if (pool.length >= 5) {
-    qs.push(createMatch(pool.slice(2, 5)))
-  }
-  qs.push(createMCQ(pool[5], allData))
-  if (pool.length >= 9) {
-    qs.push(createMatch(pool.slice(6, 9)))
+  let i = 0;
+  while (i < pool.length) {
+    if (pool.length - i >= 3 && Math.random() > 0.4) {
+      qs.push(createMatch(pool.slice(i, i + 3)))
+      i += 3
+    } else {
+      qs.push(createMCQ(pool[i], allData))
+      i += 1
+    }
   }
   
   return qs
@@ -282,6 +287,91 @@ const draggedItem = ref(null)
 const onDragStart = (e, item) => {
   draggedItem.value = item
   e.dataTransfer.effectAllowed = 'move'
+}
+
+const touchState = ref({
+  isDragging: false,
+  item: null,
+  startX: 0,
+  startY: 0,
+  cloneElement: null,
+  originalElement: null
+})
+
+const onTouchStart = (e, item) => {
+  if (item.matched || isChecked.value) return;
+  
+  const touch = e.touches[0];
+  touchState.value = {
+    isDragging: true,
+    item: item,
+    startX: touch.clientX,
+    startY: touch.clientY,
+    cloneElement: null,
+    originalElement: e.currentTarget
+  };
+  
+  const el = e.currentTarget;
+  const clone = el.cloneNode(true);
+  const rect = el.getBoundingClientRect();
+  
+  clone.style.position = 'fixed';
+  clone.style.left = `${rect.left}px`;
+  clone.style.top = `${rect.top}px`;
+  clone.style.width = `${rect.width}px`;
+  clone.style.height = `${rect.height}px`;
+  clone.style.zIndex = '9999';
+  clone.style.opacity = '0.9';
+  clone.style.pointerEvents = 'none';
+  clone.style.margin = '0';
+  clone.style.transform = 'scale(1.05)';
+  clone.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
+  clone.style.transition = 'none';
+  
+  document.body.appendChild(clone);
+  touchState.value.cloneElement = clone;
+  
+  el.style.opacity = '0.4';
+}
+
+const onTouchMove = (e) => {
+  if (!touchState.value.isDragging || !touchState.value.cloneElement) return;
+  
+  const touch = e.touches[0];
+  const deltaX = touch.clientX - touchState.value.startX;
+  const deltaY = touch.clientY - touchState.value.startY;
+  
+  touchState.value.cloneElement.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.05)`;
+}
+
+const onTouchEnd = (e) => {
+  if (!touchState.value.isDragging) return;
+  
+  const touch = e.changedTouches[0];
+  const dropTargetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+  
+  if (dropTargetEl) {
+    const dropZone = dropTargetEl.closest('.drop-zone');
+    if (dropZone) {
+      const targetId = dropZone.getAttribute('data-id');
+      const targetItem = matchRightItems.value.find(r => r.id === targetId);
+      
+      if (targetItem) {
+        draggedItem.value = touchState.value.item;
+        onDrop(null, targetItem);
+      }
+    }
+  }
+  
+  if (touchState.value.cloneElement) {
+    touchState.value.cloneElement.remove();
+  }
+  if (touchState.value.originalElement) {
+    touchState.value.originalElement.style.opacity = '1';
+  }
+  
+  touchState.value.isDragging = false;
+  touchState.value.item = null;
 }
 
 const onDrop = (e, targetItem) => {
