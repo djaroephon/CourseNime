@@ -8,7 +8,7 @@ export default defineEventHandler(() => {
       color: 'bg-pink-100 text-pink-600',
       lessons: 46,
       difficulty: 'Beginner',
-      image: 'https://images.unsplash.com/photo-1578356920163-547e1d52d9de?q=80&w=600&auto=format&fit=crop' // Tokyo vibe
+      image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDNdClq_i1DFtUOXosN23QxWpo4YTwq_ROjA&s' // Tokyo vibe
     },
     {
       id: 'katakana',
@@ -18,7 +18,7 @@ export default defineEventHandler(() => {
       color: 'bg-blue-100 text-blue-600',
       lessons: 46,
       difficulty: 'Beginner',
-      image: 'https://images.unsplash.com/photo-1542051812871-75f412670324?q=80&w=600&auto=format&fit=crop' // Cyberpunk/Neon vibe
+      image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSvnxMZoMCkGb6pCxYlDI6s_gwjNX56lKBx8w&s' // Cyberpunk/Neon vibe
     },
     {
       id: 'kanji',
