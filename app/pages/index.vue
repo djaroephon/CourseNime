@@ -10,8 +10,8 @@
     <div class="container mx-auto px-4 pt-20 pb-32 relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
       
       <div class="md:w-1/2 space-y-6 text-center md:text-left">
-        <div class="inline-block bg-white px-4 py-2 rounded-full shadow-sm text-sm font-bold text-anime-primary mb-4 border border-anime-primary/20">
-          日本語を学ぼう！
+        <div class="inline-block bg-white px-4 py-2 rounded-full shadow-sm text-sm font-bold text-anime-primary mb-4 border border-anime-primary/20 overflow-hidden text-left h-9 flex items-center">
+          <span class="anime-typing font-jp inline-block">日本語を学ぼう！ Belajar tu mudah lho~</span>
         </div>
         <h1 class="text-5xl md:text-7xl font-black text-anime-dark leading-tight font-jp">
           Belajar Bahasa Jepang <br>
@@ -42,8 +42,35 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
+import anime from 'animejs'
+
 useHead({
   title: 'CourseNime - Home'
+})
+
+onMounted(() => {
+  const textWrapper = document.querySelector('.anime-typing');
+  if (textWrapper) {
+    textWrapper.innerHTML = textWrapper.textContent.replace(/\S/g, "<span class='letter inline-block opacity-0'>$&</span>");
+
+    anime.timeline({loop: true})
+      .add({
+        targets: '.anime-typing .letter',
+        scale: [3, 1],
+        opacity: [0, 1],
+        translateZ: 0,
+        easing: "easeOutExpo",
+        duration: 800,
+        delay: (el, i) => 50 * i
+      }).add({
+        targets: '.anime-typing',
+        opacity: 0,
+        duration: 1000,
+        easing: "easeOutExpo",
+        delay: 3000
+      });
+  }
 })
 
 const getPetalStyle = (n) => {

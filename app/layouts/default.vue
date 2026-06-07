@@ -2,11 +2,11 @@
   <div class="min-h-screen flex flex-col font-sans">
     <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-anime-light shadow-sm">
       <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-        <NuxtLink to="/" class="text-2xl font-black text-anime-primary flex items-center gap-2">
-          <span class="text-3xl">🌸</span> CourseNime
+        <NuxtLink to="/" class="text-xl md:text-2xl font-black text-anime-primary flex items-center gap-1 md:gap-2">
+          <span class="text-2xl md:text-3xl">🌸</span> CourseNime
         </NuxtLink>
         <nav>
-          <ul class="flex space-x-6 text-anime-dark font-medium">
+          <ul class="flex space-x-4 md:space-x-6 text-sm md:text-base text-anime-dark font-medium">
             <li><NuxtLink to="/" class="hover:text-anime-primary transition-colors">Home</NuxtLink></li>
             <li><NuxtLink to="/courses" class="hover:text-anime-primary transition-colors">Courses</NuxtLink></li>
           </ul>
