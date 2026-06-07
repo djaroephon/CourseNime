@@ -43,7 +43,7 @@
 
 <script setup>
 import { onMounted } from 'vue'
-import anime from 'animejs'
+import anime from 'animejs/lib/anime.es.js'
 
 useHead({
   title: 'CourseNime - Home'
