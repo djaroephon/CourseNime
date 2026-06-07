@@ -10,8 +10,8 @@
     <div class="container mx-auto px-4 pt-20 pb-32 relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
       
       <div class="md:w-1/2 space-y-6 text-center md:text-left">
-        <div class="inline-block bg-white px-4 py-2 rounded-full shadow-sm text-sm font-bold text-anime-primary mb-4 border border-anime-primary/20 overflow-hidden text-left h-9 flex items-center">
-          <span class="anime-typing font-jp inline-block">日本語を学ぼう！ Belajar tu mudah lho~</span>
+        <div class="inline-block bg-white px-4 py-2 rounded-full shadow-sm text-sm font-bold text-anime-primary mb-4 border border-anime-primary/20 overflow-hidden text-left h-9 flex items-center min-w-[320px]">
+          <span class="anime-typing font-jp inline-block opacity-100">日本語を学ぼう！ Belajar tu mudah lho~</span>
         </div>
         <h1 class="text-5xl md:text-7xl font-black text-anime-dark leading-tight font-jp">
           Belajar Bahasa Jepang <br>
@@ -38,23 +38,81 @@
       </div>
 
     </div>
+
+    <!-- FITUR SECTION -->
+    <div class="relative z-10 bg-white/60 backdrop-blur-md py-24 border-y border-white/50">
+      <div class="container mx-auto px-4">
+        <div class="text-center mb-16">
+          <h2 class="text-4xl font-black text-anime-dark mb-4 font-jp">Kenapa Belajar di CourseNime?</h2>
+          <p class="text-gray-600 max-w-2xl mx-auto text-lg">Platform belajar bahasa Jepang yang didesain khusus agar kamu merasa seperti bermain game, bukan sedang sekolah.</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <!-- Fitur 1 -->
+          <div class="bg-white p-8 rounded-[2rem] shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-2 border-transparent hover:border-anime-primary/20 group">
+            <div class="w-16 h-16 bg-anime-primary/10 text-anime-primary rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform">
+              🎮
+            </div>
+            <h3 class="text-2xl font-bold text-anime-dark mb-3">Super Interaktif</h3>
+            <p class="text-gray-600 leading-relaxed">Ucapkan selamat tinggal pada belajar membosankan! Praktik langsung dengan fitur <span class="font-bold text-anime-primary">drag-and-drop</span> dan kuis cepat yang menantang adrenalinmu.</p>
+          </div>
+
+          <!-- Fitur 2 -->
+          <div class="bg-white p-8 rounded-[2rem] shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-2 border-transparent hover:border-anime-secondary/20 group">
+            <div class="w-16 h-16 bg-anime-secondary/10 text-anime-secondary rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:-rotate-6 transition-transform">
+              📊
+            </div>
+            <h3 class="text-2xl font-bold text-anime-dark mb-3">Progress Terpantau</h3>
+            <p class="text-gray-600 leading-relaxed">Semua hasil latihanmu disimpan aman di <span class="font-bold text-anime-secondary">Cloud Database</span>. Pantau terus jumlah jawaban benar dan salahmu secara real-time.</p>
+          </div>
+
+          <!-- Fitur 3 -->
+          <div class="bg-white p-8 rounded-[2rem] shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-2 border-transparent hover:border-green-500/20 group">
+            <div class="w-16 h-16 bg-green-100 text-green-500 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform">
+              🎌
+            </div>
+            <h3 class="text-2xl font-bold text-anime-dark mb-3">Paket Lengkap</h3>
+            <p class="text-gray-600 leading-relaxed">Mulai dari <span class="font-bold text-green-500">Hiragana, Katakana, hingga Kanji</span> dasar. Pondasi sempurna buat kamu yang bersiap ke Jepang atau sekadar marathon anime.</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { onMounted } from 'vue'
-import anime from 'animejs/lib/anime.es.js'
 
 useHead({
   title: 'CourseNime - Home'
 })
 
-onMounted(() => {
-  const textWrapper = document.querySelector('.anime-typing');
-  if (textWrapper) {
+onMounted(async () => {
+  const animeModule = await import('animejs');
+  const anime = animeModule.default || animeModule;
+
+  const texts = [
+    "日本語を学ぼう！ Belajar tu mudah lho~",
+    "頑張って！ (Ganbatte!) Semangat belajarnya!",
+    "諦めないで！ (Akiramenaide!) Jangan menyerah!"
+  ];
+  let currentIndex = 0;
+
+  const animateText = () => {
+    const textWrapper = document.querySelector('.anime-typing');
+    if (!textWrapper) return;
+    
+    // Reset opacity to 1 because the animation sets it to 0 at the end
+    textWrapper.style.opacity = 1;
+    textWrapper.textContent = texts[currentIndex];
     textWrapper.innerHTML = textWrapper.textContent.replace(/\S/g, "<span class='letter inline-block opacity-0'>$&</span>");
 
-    anime.timeline({loop: true})
+    anime.timeline({
+      complete: () => {
+        currentIndex = (currentIndex + 1) % texts.length;
+        animateText();
+      }
+    })
       .add({
         targets: '.anime-typing .letter',
         scale: [3, 1],
@@ -70,7 +128,9 @@ onMounted(() => {
         easing: "easeOutExpo",
         delay: 3000
       });
-  }
+  };
+
+  animateText();
 })
 
 const getPetalStyle = (n) => {

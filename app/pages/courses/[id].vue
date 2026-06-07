@@ -175,6 +175,8 @@ import { ref, computed } from 'vue'
 
 const route = useRoute()
 const router = useRouter()
+const supabase = useSupabaseClient()
+const profileId = useCookie('course_profile_id')
 
 useHead({
   title: `CourseNime - Belajar ${route.params.id}`
@@ -407,12 +409,36 @@ const checkAnswer = () => {
   }
 }
 
-const nextQuestion = () => {
+const isSavingResult = ref(false)
+
+const saveResultToSupabase = async () => {
+  if (!profileId.value) return;
+  
+  isSavingResult.value = true;
+  try {
+    await supabase.from('quiz_results').insert([
+      {
+        profile_id: profileId.value,
+        course_id: route.params.id,
+        correct_answers: score.value,
+        wrong_answers: questions.value.length - score.value,
+        total_score: Math.round((score.value / questions.value.length) * 100)
+      }
+    ])
+  } catch(e) {
+    console.error('Failed to save quiz results:', e)
+  } finally {
+    isSavingResult.value = false;
+  }
+}
+
+const nextQuestion = async () => {
   if (currentIndex.value < questions.value.length - 1) {
     currentIndex.value++
     setupQuestionState()
   } else {
     isFinished.value = true
+    await saveResultToSupabase()
   }
 }
 

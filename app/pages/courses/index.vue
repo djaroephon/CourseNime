@@ -59,6 +59,17 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
+
+const router = useRouter()
+const profileId = useCookie('course_profile_id')
+
+onMounted(() => {
+  if (!profileId.value) {
+    router.push('/register')
+  }
+})
+
 useHead({
   title: 'CourseNime - Pilih Course'
 })
