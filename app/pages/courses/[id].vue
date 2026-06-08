@@ -13,37 +13,116 @@
       </div>
     </div>
 
-    <div v-else-if="!quizStarted && !isFinished" class="flex-grow flex flex-col justify-center items-center p-4 z-10 relative">
-      <div class="absolute top-10 left-10 text-9xl text-anime-primary/10 font-jp -rotate-12 animate-pulse">学</div>
+    <!-- MENU MODE -->
+    <div v-else-if="viewMode === 'menu'" class="flex-grow flex flex-col items-center p-4 py-10 z-10 relative">
+      <div class="absolute top-10 right-10 text-9xl text-anime-primary/5 font-jp rotate-12">学</div>
       
-      <div class="bg-white/80 backdrop-blur-md p-10 rounded-[3rem] shadow-2xl text-center max-w-lg w-full border-4 border-white">
-        <div class="w-24 h-24 bg-anime-primary/20 text-anime-primary rounded-full flex items-center justify-center text-5xl mx-auto mb-6">
-          🎮
+      <div class="max-w-4xl w-full z-10">
+        <div class="flex items-center gap-4 mb-10">
+          <NuxtLink to="/courses" class="bg-white p-3 rounded-xl shadow-sm text-gray-500 hover:text-anime-primary hover:shadow-md transition-all font-bold">
+            ← Kembali
+          </NuxtLink>
+          <h1 class="text-4xl font-black text-anime-dark">{{ course.title }}</h1>
         </div>
-        <h1 class="text-4xl font-black text-anime-dark mb-4">Siap Berlatih?</h1>
-        <p class="text-gray-600 mb-8 text-lg">
-          Selesaikan tantangan kuis interaktif untuk menguasai {{ course.title }}. Ada pilihan ganda dan pencocokan huruf!
-        </p>
-        <button @click="startQuiz" class="w-full bg-anime-primary hover:bg-anime-primary/90 text-white font-bold py-4 rounded-2xl shadow-lg hover:-translate-y-1 transition-all text-xl">
-          Mulai Sekarang
-        </button>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div v-for="(stage, idx) in course.stages" :key="stage.id" 
+               @click="isStageUnlocked(idx) ? openMaterial(stage) : null"
+               :class="[
+                 'p-8 rounded-3xl border-4 transition-all flex flex-col',
+                 isStageUnlocked(idx) 
+                   ? 'bg-white border-transparent shadow-xl hover:-translate-y-1 hover:border-anime-primary cursor-pointer' 
+                   : 'bg-gray-100 border-gray-200 opacity-70 cursor-not-allowed'
+               ]">
+            <div class="flex justify-between items-start mb-4">
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-bold"
+                   :class="isStageUnlocked(idx) ? 'bg-anime-primary/20 text-anime-primary' : 'bg-gray-300 text-gray-500'">
+                {{ idx + 1 }}
+              </div>
+              <div v-if="!isStageUnlocked(idx)" class="text-gray-400 text-2xl">🔒</div>
+              <div v-else-if="isStagePassed(stage.id)" class="text-green-500 text-2xl">⭐</div>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ stage.title }}</h2>
+            <p class="text-gray-500 mb-4">{{ stage.material.length }} Karakter / Kosakata</p>
+            <div class="mt-auto pt-4 border-t border-gray-100 font-bold"
+                 :class="isStageUnlocked(idx) ? 'text-anime-primary' : 'text-gray-400'">
+              {{ isStageUnlocked(idx) ? 'Mulai Belajar →' : 'Terkunci' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- EXAM SECTION -->
+        <div @click="isExamUnlocked ? openExam() : null"
+             :class="[
+               'w-full p-8 rounded-3xl border-4 text-center transition-all flex flex-col items-center justify-center',
+               isExamUnlocked 
+                 ? 'bg-gradient-to-r from-anime-secondary to-anime-primary border-transparent text-white shadow-2xl hover:scale-[1.02] cursor-pointer' 
+                 : 'bg-gray-100 border-gray-200 opacity-70 cursor-not-allowed'
+             ]">
+          <div class="text-5xl mb-4" :class="isExamUnlocked ? '' : 'grayscale'">👑</div>
+          <h2 class="text-3xl font-black mb-2" :class="isExamUnlocked ? 'text-white' : 'text-gray-600'">Final Exam</h2>
+          <p :class="isExamUnlocked ? 'text-white/80' : 'text-gray-500 font-medium'">
+            {{ isExamUnlocked ? 'Buktikan kemampuanmu!' : 'Selesaikan semua stage untuk membuka Exam.' }}
+          </p>
+          <div v-if="isExamPassed" class="mt-4 bg-white text-anime-primary px-4 py-1 rounded-full font-bold shadow-sm">
+            Telah Lulus ⭐
+          </div>
+        </div>
       </div>
     </div>
 
-    <div v-else-if="quizStarted && !isFinished && currentQuestion" class="flex-grow flex flex-col z-10 bg-white">
+    <!-- MATERIAL MODE -->
+    <div v-else-if="viewMode === 'material'" class="flex-grow flex flex-col items-center p-4 py-10 z-10 relative">
+      <div class="max-w-5xl w-full">
+        <div class="flex items-center justify-between mb-10">
+          <button @click="backToMenu" class="bg-white p-3 rounded-xl shadow-sm text-gray-500 hover:text-anime-primary hover:shadow-md transition-all font-bold">
+            ← Menu
+          </button>
+          <h1 class="text-3xl font-black text-anime-dark">{{ currentStage.title }}</h1>
+        </div>
+
+        <p class="text-gray-600 text-lg mb-8 text-center max-w-2xl mx-auto">
+          Pelajari karakter dan kosakata berikut ini. Ingat-ingat bentuk dan cara bacanya sebelum kamu memulai kuis!
+        </p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-12">
+          <div v-for="(item, idx) in currentStage.material" :key="idx" 
+               class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all border-2 border-transparent hover:border-anime-primary text-center group">
+            <div class="text-5xl md:text-6xl font-jp text-anime-dark mb-4 transform group-hover:scale-110 transition-transform">
+              {{ item.char }}
+            </div>
+            <div class="text-xl font-bold text-anime-primary uppercase tracking-widest">{{ item.romaji }}</div>
+            <div v-if="item.meaning" class="text-sm font-medium text-gray-500 mt-2 bg-gray-50 py-1 px-2 rounded-lg truncate">
+              {{ item.meaning }}
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-center pb-20">
+          <button @click="startQuiz" class="bg-anime-primary hover:bg-anime-primary/90 text-white font-bold py-4 px-12 rounded-full shadow-xl hover:-translate-y-2 transition-all text-xl flex items-center gap-3">
+            <span>Mulai Test</span>
+            <span class="text-2xl">🎮</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUIZ / EXAM MODE -->
+    <div v-else-if="(viewMode === 'quiz' || viewMode === 'exam') && currentQuestion" class="flex-grow flex flex-col z-10 bg-white">
       
       <div class="container mx-auto px-4 py-6 flex items-center gap-4">
-        <button @click="quitQuiz" class="text-gray-400 hover:text-gray-600 text-2xl font-bold transition-colors">✕</button>
+        <button @click="backToMenu" class="text-gray-400 hover:text-gray-600 text-2xl font-bold transition-colors">✕</button>
         <div class="flex-grow bg-gray-200 h-4 rounded-full overflow-hidden">
           <div class="bg-green-500 h-full transition-all duration-500 ease-out" :style="{ width: `${progressPercentage}%` }"></div>
         </div>
       </div>
 
       <div class="flex-grow container mx-auto px-4 max-w-3xl flex flex-col justify-center pb-32">
-        <h2 class="text-2xl font-bold text-gray-800 mb-8 font-jp">{{ currentQuestion.prompt }}</h2>
+        <h2 class="text-2xl font-bold text-gray-800 mb-8 font-jp text-center">{{ currentQuestion.prompt }}</h2>
 
+        <!-- MCQ QUESTION -->
         <div v-if="currentQuestion.type === 'mcq'" class="flex flex-col items-center">
-          <div class="text-7xl md:text-8xl font-black text-anime-dark mb-8 md:mb-12 font-jp">{{ currentQuestion.target.char }}</div>
+          <div class="text-7xl md:text-9xl font-black text-anime-dark mb-8 md:mb-12 font-jp">{{ currentQuestion.target.char }}</div>
           
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 w-full">
             <button v-for="(opt, idx) in currentQuestion.options" :key="idx"
@@ -62,9 +141,11 @@
           </div>
         </div>
 
+        <!-- MATCH QUESTION -->
         <div v-if="currentQuestion.type === 'match'" class="w-full">
           <p class="text-gray-500 mb-4 md:mb-6 italic text-center text-sm md:text-base">Drag kotak sebelah kiri ke dalam kotak kosong sebelah kanan untuk mencocokkan.</p>
           <div class="flex justify-between gap-3 md:gap-8">
+            <!-- Left Items (Draggable) -->
             <div class="flex flex-col gap-3 md:gap-4 w-1/2">
               <div v-for="item in matchLeftItems" :key="item.id"
                    :draggable="!item.matched && !isChecked"
@@ -80,6 +161,7 @@
               </div>
             </div>
 
+            <!-- Right Items (Drop Zones) -->
             <div class="flex flex-col gap-3 md:gap-4 w-1/2">
               <div v-for="item in matchRightItems" :key="item.id"
                    :data-id="item.id"
@@ -87,15 +169,15 @@
                    @dragenter.prevent
                    @drop="onDrop($event, item)"
                    :class="[
-                     'drop-zone p-3 md:p-4 rounded-xl border-2 flex items-center justify-between text-xl md:text-2xl font-bold font-jp transition-all min-h-[64px]',
+                     'drop-zone p-3 md:p-4 rounded-xl border-2 flex items-center justify-between text-xl md:text-2xl font-bold font-jp transition-all min-h-[64px] shadow-inner',
                      item.matchedWith ? 'border-anime-primary bg-anime-primary/5 text-anime-dark' : 'border-dashed border-gray-300 bg-gray-50 text-gray-400'
                    ]">
-                <span>{{ item.text }}</span>
+                <span class="w-1/2">{{ item.text }}</span>
                 <span v-if="item.matchedWith" 
                       @click="removeItem(item)"
-                      class="text-anime-primary text-base md:text-xl font-sans bg-white px-2 md:px-3 py-1 rounded-lg border border-anime-primary/20 shadow-sm truncate max-w-[60%] text-right cursor-pointer hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors flex items-center gap-1 group">
-                  {{ item.matchedWith.text }} 
-                  <span class="text-xs opacity-50 group-hover:opacity-100 group-hover:text-red-500">✕</span>
+                      class="text-anime-primary text-base md:text-xl font-sans bg-white px-2 md:px-3 py-1 rounded-lg border border-anime-primary/20 shadow-sm truncate max-w-[60%] text-right cursor-pointer hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors flex items-center justify-between gap-1 group">
+                  <span class="truncate">{{ item.matchedWith.text }}</span>
+                  <span class="text-xs opacity-50 group-hover:opacity-100 group-hover:text-red-500 ml-1">✕</span>
                 </span>
               </div>
             </div>
@@ -103,6 +185,7 @@
         </div>
       </div>
 
+      <!-- BOTTOM ACTION BAR -->
       <div :class="[
         'fixed bottom-0 left-0 right-0 border-t-2 p-4 transition-colors duration-300 z-50',
         !isChecked ? 'bg-white border-gray-200' : isCorrect ? 'bg-green-100 border-green-200' : 'bg-red-100 border-red-200'
@@ -111,13 +194,13 @@
           
           <div class="flex items-center gap-3 md:gap-4 w-full md:w-auto justify-center md:justify-start">
             <div v-if="isChecked && isCorrect" class="text-green-600 flex items-center gap-2 md:gap-3">
-              <div class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-xl md:text-2xl shadow-sm">✓</div>
+              <div class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-xl md:text-2xl shadow-sm font-bold">✓</div>
               <div>
                 <p class="font-black text-lg md:text-xl">Luar Biasa!</p>
               </div>
             </div>
             <div v-if="isChecked && !isCorrect" class="text-red-600 flex items-center gap-2 md:gap-3">
-              <div class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-xl md:text-2xl shadow-sm">✗</div>
+              <div class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-xl md:text-2xl shadow-sm font-bold">✗</div>
               <div>
                 <p class="font-black text-lg md:text-xl">Kurang Tepat.</p>
                 <p v-if="currentQuestion.type === 'mcq'" class="text-xs md:text-sm font-medium opacity-80 mt-0.5 md:mt-1">Jawaban benar: {{ currentQuestion.target.romaji }}</p>
@@ -147,26 +230,30 @@
       </div>
     </div>
 
-    <div v-else-if="isFinished" class="flex-grow flex flex-col justify-center items-center p-4 z-10 relative">
+    <!-- FINISHED MODE -->
+    <div v-else-if="viewMode === 'finished'" class="flex-grow flex flex-col justify-center items-center p-4 z-10 relative">
       <div class="bg-white/90 backdrop-blur-md p-10 rounded-[3rem] shadow-2xl text-center max-w-lg w-full border-4 border-yellow-200">
         <div class="text-6xl mb-6 animate-bounce">🏆</div>
         <h1 class="text-4xl font-black text-yellow-500 mb-2">Pelajaran Selesai!</h1>
-        <p class="text-gray-600 mb-8 text-lg font-medium">Kamu telah menyelesaikan sesi latihan ini dengan baik.</p>
+        <p class="text-gray-600 mb-8 text-lg font-medium">Kamu telah menyelesaikan sesi ini dengan baik.</p>
         
         <div class="flex justify-center gap-8 mb-8">
           <div class="text-center">
             <p class="text-gray-400 text-sm font-bold uppercase mb-1">Skor</p>
-            <p class="text-3xl font-black text-anime-dark">{{ Math.round((score / questions.length) * 100) }}%</p>
+            <p class="text-4xl font-black" :class="scorePercentage >= 60 ? 'text-green-500' : 'text-red-500'">{{ scorePercentage }}%</p>
           </div>
           <div class="text-center">
             <p class="text-gray-400 text-sm font-bold uppercase mb-1">Benar</p>
-            <p class="text-3xl font-black text-green-500">{{ score }}</p>
+            <p class="text-4xl font-black text-anime-dark">{{ score }} / {{ questions.length }}</p>
           </div>
         </div>
 
-        <NuxtLink to="/courses" class="w-full block bg-anime-primary hover:bg-anime-primary/90 text-white font-bold py-4 rounded-2xl shadow-lg transition-all text-xl hover:-translate-y-1">
-          Selesai
-        </NuxtLink>
+        <p v-if="scorePercentage < 60" class="text-red-500 mb-6 font-bold">Skor minimal untuk lulus adalah 60%. Coba lagi ya!</p>
+        <p v-else class="text-green-500 mb-6 font-bold">Selamat! Kamu lulus tahapan ini.</p>
+
+        <button @click="backToMenu" class="w-full bg-anime-primary hover:bg-anime-primary/90 text-white font-bold py-4 rounded-2xl shadow-lg transition-all text-xl hover:-translate-y-1">
+          Kembali ke Menu
+        </button>
       </div>
     </div>
 
@@ -185,23 +272,90 @@ useHead({
   title: `CourseNime - Belajar ${route.params.id}`
 })
 
+// Fetch Course Data
 const { data: course, pending, error } = await useFetch(`/api/classes/${route.params.id}`)
 
-const quizStarted = ref(false)
-const isFinished = ref(false)
+// Fetch Progress from Supabase
+const { data: results, refresh: refreshProgress } = await useAsyncData(`progress-${route.params.id}`, async () => {
+  if (!profileId.value) return []
+  const { data, error } = await supabase.from('quiz_results')
+    .select('course_id, total_score')
+    .eq('profile_id', profileId.value)
+    .like('course_id', `${route.params.id}%`) // Fetch all results for this course (stages + exam)
+  
+  if (error) {
+    console.error('Failed to fetch progress', error)
+    return []
+  }
+  return data || []
+})
+
+// Modes: 'menu' | 'material' | 'quiz' | 'exam' | 'finished'
+const viewMode = ref('menu')
+const currentStage = ref(null)
+
+// Check Progress Logic
+const isStagePassed = (stageId) => {
+  const cId = `${route.params.id}_stage_${stageId}`
+  const bestResult = results.value?.filter(r => r.course_id === cId).sort((a,b) => b.total_score - a.total_score)[0]
+  return bestResult && bestResult.total_score >= 60
+}
+
+const isStageUnlocked = (index) => {
+  if (index === 0) return true; // First stage always open
+  const prevStageId = course.value?.stages[index - 1].id
+  return isStagePassed(prevStageId)
+}
+
+const isExamUnlocked = computed(() => {
+  if (!course.value?.stages) return false;
+  return course.value.stages.every(s => isStagePassed(s.id))
+})
+
+const isExamPassed = computed(() => {
+  const cId = `${route.params.id}_exam`
+  const bestResult = results.value?.filter(r => r.course_id === cId).sort((a,b) => b.total_score - a.total_score)[0]
+  return bestResult && bestResult.total_score >= 60
+})
+
+// Navigation
+const openMaterial = (stage) => {
+  currentStage.value = stage
+  viewMode.value = 'material'
+}
+
+const openExam = () => {
+  currentStage.value = null
+  viewMode.value = 'exam'
+  questions.value = generateQuestions(course.value.stages.flatMap(s => s.material))
+  startQuizProcess()
+}
+
+const startQuiz = () => {
+  viewMode.value = 'quiz'
+  questions.value = generateQuestions(currentStage.value.material)
+  startQuizProcess()
+}
+
+const backToMenu = async () => {
+  await refreshProgress()
+  viewMode.value = 'menu'
+  currentStage.value = null
+}
+
+// Quiz State
 const questions = ref([])
 const currentIndex = ref(0)
-
 const selectedAnswer = ref(null)
 const isChecked = ref(false)
 const isCorrect = ref(false)
 const score = ref(0)
-
 const matchLeftItems = ref([])
 const matchRightItems = ref([])
 
 const currentQuestion = computed(() => questions.value[currentIndex.value])
 const progressPercentage = computed(() => (currentIndex.value / questions.value.length) * 100)
+const scorePercentage = computed(() => Math.round((score.value / questions.value.length) * 100))
 
 const canCheck = computed(() => {
   if (!currentQuestion.value) return false;
@@ -212,28 +366,31 @@ const canCheck = computed(() => {
   return false;
 })
 
-
 const shuffle = (array) => array.slice().sort(() => Math.random() - 0.5)
 
-const generateQuestions = () => {
-  const allData = course.value?.data || []
-  if (allData.length === 0) return []
-  
+const generateQuestions = (materialData) => {
+  if (!materialData || materialData.length === 0) return []
   const qs = []
-  const pool = shuffle(allData)
+  const pool = shuffle(materialData)
   
+  // Create more questions by repeating pool if it's too small (e.g. less than 10)
+  let workingPool = [...pool]
+  if(workingPool.length < 10) {
+      workingPool = [...workingPool, ...shuffle(pool)]
+  }
+
   let i = 0;
-  while (i < pool.length) {
-    if (pool.length - i >= 3 && Math.random() > 0.4) {
-      qs.push(createMatch(pool.slice(i, i + 3)))
+  while (i < workingPool.length) {
+    if (workingPool.length - i >= 3 && Math.random() > 0.4) {
+      qs.push(createMatch(workingPool.slice(i, i + 3)))
       i += 3
     } else {
-      qs.push(createMCQ(pool[i], allData))
+      qs.push(createMCQ(workingPool[i], materialData))
       i += 1
     }
   }
   
-  return qs
+  return qs.slice(0, 10) // Limit to 10 questions per quiz
 }
 
 const createMCQ = (targetItem, allData) => {
@@ -241,7 +398,7 @@ const createMCQ = (targetItem, allData) => {
   const options = shuffle([targetItem.romaji, ...distractors.map(d => d.romaji)])
   return {
     type: 'mcq',
-    prompt: 'Apa bacaan dari huruf ini?',
+    prompt: targetItem.meaning ? 'Apa bacaan/arti dari kata ini?' : 'Apa bacaan dari huruf ini?',
     target: targetItem,
     options
   }
@@ -250,17 +407,14 @@ const createMCQ = (targetItem, allData) => {
 const createMatch = (items) => {
   return {
     type: 'match',
-    prompt: 'Cocokkan huruf Jepang dengan bacaan yang benar!',
+    prompt: 'Cocokkan karakter Jepang dengan bacaan yang benar!',
     pairs: items 
   }
 }
 
-const startQuiz = () => {
-  questions.value = generateQuestions()
+const startQuizProcess = () => {
   currentIndex.value = 0
   score.value = 0
-  isFinished.value = false
-  quizStarted.value = true
   setupQuestionState()
 }
 
@@ -271,14 +425,8 @@ const setupQuestionState = () => {
   
   const q = currentQuestion.value
   if (q && q.type === 'match') {
-    matchLeftItems.value = shuffle(q.pairs.map(p => ({ id: `L_${p.romaji}`, text: p.romaji, originalId: p.romaji, matched: false })))
-    matchRightItems.value = shuffle(q.pairs.map(p => ({ id: `R_${p.romaji}`, text: p.char, originalId: p.romaji, matchedWith: null })))
-  }
-}
-
-const quitQuiz = () => {
-  if(confirm('Yakin ingin keluar? Progresmu akan hilang.')) {
-    router.push('/courses')
+    matchLeftItems.value = shuffle(q.pairs.map(p => ({ id: `L_${p.romaji}_${Math.random()}`, text: p.romaji, originalId: p.romaji, matched: false })))
+    matchRightItems.value = shuffle(q.pairs.map(p => ({ id: `R_${p.romaji}_${Math.random()}`, text: p.char, originalId: p.romaji, matchedWith: null })))
   }
 }
 
@@ -287,6 +435,7 @@ const selectOption = (opt) => {
   selectedAnswer.value = opt
 }
 
+// Drag and Drop Logic
 const draggedItem = ref(null)
 
 const onDragStart = (e, item) => {
@@ -305,7 +454,6 @@ const touchState = ref({
 
 const onTouchStart = (e, item) => {
   if (item.matched || isChecked.value) return;
-  
   const touch = e.touches[0];
   touchState.value = {
     isDragging: true,
@@ -335,23 +483,19 @@ const onTouchStart = (e, item) => {
   
   document.body.appendChild(clone);
   touchState.value.cloneElement = clone;
-  
   el.style.opacity = '0.4';
 }
 
 const onTouchMove = (e) => {
   if (!touchState.value.isDragging || !touchState.value.cloneElement) return;
-  
   const touch = e.touches[0];
   const deltaX = touch.clientX - touchState.value.startX;
   const deltaY = touch.clientY - touchState.value.startY;
-  
   touchState.value.cloneElement.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.05)`;
 }
 
 const onTouchEnd = (e) => {
   if (!touchState.value.isDragging) return;
-  
   const touch = e.changedTouches[0];
   const dropTargetEl = document.elementFromPoint(touch.clientX, touch.clientY);
   
@@ -360,7 +504,6 @@ const onTouchEnd = (e) => {
     if (dropZone) {
       const targetId = dropZone.getAttribute('data-id');
       const targetItem = matchRightItems.value.find(r => r.id === targetId);
-      
       if (targetItem) {
         draggedItem.value = touchState.value.item;
         onDrop(null, targetItem);
@@ -368,12 +511,8 @@ const onTouchEnd = (e) => {
     }
   }
   
-  if (touchState.value.cloneElement) {
-    touchState.value.cloneElement.remove();
-  }
-  if (touchState.value.originalElement) {
-    touchState.value.originalElement.style.opacity = '1';
-  }
+  if (touchState.value.cloneElement) touchState.value.cloneElement.remove();
+  if (touchState.value.originalElement) touchState.value.originalElement.style.opacity = '1';
   
   touchState.value.isDragging = false;
   touchState.value.item = null;
@@ -381,17 +520,13 @@ const onTouchEnd = (e) => {
 
 const onDrop = (e, targetItem) => {
   if (!draggedItem.value) return
-  
   if (targetItem.matchedWith) {
     const oldLeft = matchLeftItems.value.find(l => l.id === targetItem.matchedWith.id)
     if (oldLeft) oldLeft.matched = false
   }
-
   targetItem.matchedWith = draggedItem.value
-  
   const leftItem = matchLeftItems.value.find(l => l.id === draggedItem.value.id)
   if (leftItem) leftItem.matched = true
-  
   draggedItem.value = null
 }
 
@@ -406,7 +541,6 @@ const removeItem = (targetItem) => {
 
 const checkAnswer = () => {
   if (!canCheck.value) return
-  
   isChecked.value = true
   const q = currentQuestion.value
   
@@ -415,26 +549,24 @@ const checkAnswer = () => {
   } else if (q.type === 'match') {
     isCorrect.value = matchRightItems.value.every(r => r.matchedWith && r.originalId === r.matchedWith.originalId)
   }
-  
-  if (isCorrect.value) {
-    score.value++
-  }
+  if (isCorrect.value) score.value++
 }
 
 const isSavingResult = ref(false)
-
 const saveResultToSupabase = async () => {
   if (!profileId.value) return;
-  
   isSavingResult.value = true;
+  
+  const cId = viewMode.value === 'exam' ? `${route.params.id}_exam` : `${route.params.id}_stage_${currentStage.value.id}`
+  
   try {
     await supabase.from('quiz_results').insert([
       {
         profile_id: profileId.value,
-        course_id: route.params.id,
+        course_id: cId,
         correct_answers: score.value,
         wrong_answers: questions.value.length - score.value,
-        total_score: Math.round((score.value / questions.value.length) * 100)
+        total_score: scorePercentage.value
       }
     ])
   } catch(e) {
@@ -449,8 +581,8 @@ const nextQuestion = async () => {
     currentIndex.value++
     setupQuestionState()
   } else {
-    isFinished.value = true
     await saveResultToSupabase()
+    viewMode.value = 'finished'
   }
 }
 
