@@ -141,7 +141,14 @@ export default defineEventHandler((event) => {
         { romaji: 'futari', char: '二人', meaning: 'Dua Orang (Dua+Orang)' },
         { romaji: 'getsuyoubi', char: '月曜日', meaning: 'Hari Senin (Bulan+Hari)' },
         { romaji: 'kayoubi', char: '火曜日', meaning: 'Hari Selasa (Api+Hari)' },
-        { romaji: 'suiyoubi', char: '水曜日', meaning: 'Hari Rabu (Air+Hari)' }
+        { romaji: 'suiyoubi', char: '水曜日', meaning: 'Hari Rabu (Air+Hari)' },
+        { romaji: 'mokuyoubi', char: '木曜日', meaning: 'Hari Kamis (Pohon+Hari)' },
+        { romaji: 'kinyoubi', char: '金曜日', meaning: 'Hari Jumat (Emas+Hari)' },
+        { romaji: 'doyoubi', char: '土曜日', meaning: 'Hari Sabtu (Tanah+Hari)' },
+        { romaji: 'nichiyoubi', char: '日曜日', meaning: 'Hari Minggu (Matahari+Hari)' },
+        { romaji: 'jinkou', char: '人口', meaning: 'Populasi (Orang+Mulut)' },
+        { romaji: 'chika', char: '地下', meaning: 'Bawah Tanah (Bawah+Tanah)' },
+        { romaji: 'ninki', char: '人気', meaning: 'Populer (Orang+Energi)' }
       ]
     }
   ];

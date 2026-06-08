@@ -275,13 +275,16 @@ useHead({
 // Fetch Course Data
 const { data: course, pending, error } = await useFetch(`/api/classes/${route.params.id}`)
 
-// Fetch Progress from Supabase
+// Local Stage Progress (Untuk membuka kunci stage tanpa membebani Supabase)
+const localStageProgress = useCookie(`stage_progress_${route.params.id}`, { default: () => [] })
+
+// Fetch Progress from Supabase (HANYA UNTUK EXAM)
 const { data: results, refresh: refreshProgress } = await useAsyncData(`progress-${route.params.id}`, async () => {
   if (!profileId.value) return []
   const { data, error } = await supabase.from('quiz_results')
     .select('course_id, total_score')
     .eq('profile_id', profileId.value)
-    .like('course_id', `${route.params.id}%`) // Fetch all results for this course (stages + exam)
+    .eq('course_id', `${route.params.id}_exam`)
   
   if (error) {
     console.error('Failed to fetch progress', error)
@@ -296,9 +299,7 @@ const currentStage = ref(null)
 
 // Check Progress Logic
 const isStagePassed = (stageId) => {
-  const cId = `${route.params.id}_stage_${stageId}`
-  const bestResult = results.value?.filter(r => r.course_id === cId).sort((a,b) => b.total_score - a.total_score)[0]
-  return bestResult && bestResult.total_score >= 60
+  return localStageProgress.value.includes(stageId)
 }
 
 const isStageUnlocked = (index) => {
@@ -554,10 +555,21 @@ const checkAnswer = () => {
 
 const isSavingResult = ref(false)
 const saveResultToSupabase = async () => {
+  // Jika ini tes per Stage, simpan skor secara lokal (cookies) saja
+  if (viewMode.value !== 'exam') {
+    if (scorePercentage.value >= 60 && currentStage.value) {
+      if (!localStageProgress.value.includes(currentStage.value.id)) {
+        localStageProgress.value = [...localStageProgress.value, currentStage.value.id]
+      }
+    }
+    return;
+  }
+
+  // Jika ini Final Exam, simpan skor ke Supabase
   if (!profileId.value) return;
   isSavingResult.value = true;
   
-  const cId = viewMode.value === 'exam' ? `${route.params.id}_exam` : `${route.params.id}_stage_${currentStage.value.id}`
+  const cId = `${route.params.id}_exam`
   
   try {
     await supabase.from('quiz_results').insert([
@@ -570,7 +582,7 @@ const saveResultToSupabase = async () => {
       }
     ])
   } catch(e) {
-    console.error('Failed to save quiz results:', e)
+    console.error('Failed to save exam results:', e)
   } finally {
     isSavingResult.value = false;
   }
