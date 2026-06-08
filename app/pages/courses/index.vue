@@ -54,7 +54,7 @@
         </div>
       </div>
       
-      <div v-if="profileId && courses && courses.length > 0" class="text-center mt-16 mb-8">
+      <div v-if="hasFinishedAll" class="text-center mt-16 mb-8">
         <button @click="confirmReset" :disabled="isResetting" 
                 class="text-red-500 hover:text-red-600 font-bold border-2 border-red-200 hover:border-red-500 bg-white hover:bg-red-50 px-8 py-3 rounded-2xl transition-all shadow-sm">
           {{ isResetting ? 'Mereset...' : 'Mulai Ulang dari Awal (Reset Progress)' }}
@@ -73,8 +73,18 @@ const profileId = useCookie('course_profile_id')
 const supabase = useSupabaseClient()
 const isResetting = ref(false)
 
-onMounted(() => {
+onMounted(async () => {
   if (!profileId.value) {
+    router.push('/register')
+    return
+  }
+
+  // Cek apakah profil masih terdaftar di Supabase (jaga-jaga kalau database baru di-reset)
+  const { data, error } = await supabase.from('profiles').select('id').eq('id', profileId.value).single()
+  if (error || !data) {
+    // Jika data tidak ditemukan, hapus cookie dan paksa daftar ulang
+    profileId.value = null
+    alert('Database telah diperbarui. Silakan daftar ulang ya!')
     router.push('/register')
   }
 })
@@ -83,7 +93,28 @@ useHead({
   title: 'CourseNime - Pilih Course'
 })
 
-const { data: courses, pending, error } = await useFetch('/api/courses')
+const { data: courses, pending, error: coursesError } = await useFetch('/api/courses')
+
+// Ambil data hasil ujian dari database
+const { data: results } = await useAsyncData('user-progress', async () => {
+  if (!profileId.value) return []
+  const { data } = await supabase
+    .from('quiz_results')
+    .select('course_id, total_score')
+    .eq('profile_id', profileId.value)
+    .like('course_id', '%_exam')
+  return data || []
+})
+
+// Cek apakah user sudah menyelesaikan dan lulus semua ujian (skor >= 60)
+const hasFinishedAll = computed(() => {
+  if (!courses.value || !results.value) return false;
+  
+  return courses.value.every(c => {
+    const examResults = results.value.filter(r => r.course_id === `${c.id}_exam`)
+    return examResults.some(r => r.total_score >= 60)
+  })
+})
 
 const confirmReset = async () => {
   const confirmed = confirm('⚠️ PERINGATAN!\n\nApakah kamu yakin ingin mulai ulang dari awal? Seluruh nilai ujian dan progress stage-mu akan di-reset menjadi 0!')
