@@ -54,6 +54,13 @@
         </div>
       </div>
       
+      <div v-if="profileId && courses && courses.length > 0" class="text-center mt-16 mb-8">
+        <button @click="confirmReset" :disabled="isResetting" 
+                class="text-red-500 hover:text-red-600 font-bold border-2 border-red-200 hover:border-red-500 bg-white hover:bg-red-50 px-8 py-3 rounded-2xl transition-all shadow-sm">
+          {{ isResetting ? 'Mereset...' : 'Mulai Ulang dari Awal (Reset Progress)' }}
+        </button>
+      </div>
+
     </div>
   </div>
 </template>
@@ -63,6 +70,8 @@ import { onMounted } from 'vue'
 
 const router = useRouter()
 const profileId = useCookie('course_profile_id')
+const supabase = useSupabaseClient()
+const isResetting = ref(false)
 
 onMounted(() => {
   if (!profileId.value) {
@@ -75,4 +84,34 @@ useHead({
 })
 
 const { data: courses, pending, error } = await useFetch('/api/courses')
+
+const confirmReset = async () => {
+  const confirmed = confirm('⚠️ PERINGATAN!\n\nApakah kamu yakin ingin mulai ulang dari awal? Seluruh nilai ujian dan progress stage-mu akan di-reset menjadi 0!')
+  if (!confirmed) return;
+
+  isResetting.value = true;
+  try {
+    const { error } = await supabase
+      .from('quiz_results')
+      .delete()
+      .eq('profile_id', profileId.value)
+    
+    if (error) {
+      console.warn('Penghapusan via API Supabase gagal/ditolak oleh RLS. Progress lokal tetap akan di-reset.', error)
+    }
+
+    courses.value?.forEach(c => {
+      const stageCookie = useCookie(`stage_progress_${c.id}`)
+      stageCookie.value = []
+    })
+
+    alert('✅ Progress berhasil di-reset. Ayo mulai petualangan barumu!')
+    window.location.reload()
+  } catch (err) {
+    console.error(err)
+    alert('Terjadi kesalahan saat mereset.')
+  } finally {
+    isResetting.value = false;
+  }
+}
 </script>

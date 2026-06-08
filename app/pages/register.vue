@@ -28,8 +28,8 @@
         </div>
 
         <div>
-          <label class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Foto Profil (Opsional)</label>
-          <input type="file" accept="image/*" @change="handleFileChange"
+          <label class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Foto Profil (Wajib)</label>
+          <input type="file" required accept="image/*" @change="handleFileChange"
                  class="w-full px-5 py-3 bg-gray-50 rounded-2xl border-2 border-gray-200 focus:bg-white focus:ring-0 focus:border-anime-primary transition-all outline-none font-medium text-base file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-anime-primary/10 file:text-anime-primary hover:file:bg-anime-primary/20" />
         </div>
 
@@ -70,6 +70,11 @@ const handleFileChange = (e) => {
 }
 
 const handleRegister = async () => {
+  if (!photoFile.value) {
+    alert('Foto profil wajib diunggah untuk melanjutkan!');
+    return;
+  }
+
   isLoading.value = true;
   
   try {
