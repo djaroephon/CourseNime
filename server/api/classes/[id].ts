@@ -142,7 +142,7 @@ export default defineEventHandler((event) => {
         { romaji: 'ichinichi', char: '一日', meaning: 'Satu Hari (Satu+Hari)' },
         { romaji: 'mikazuki', char: '三日月', meaning: 'Bulan Sabit (Tiga+Hari+Bulan)' },
         { romaji: 'yamakawa', char: '山川', meaning: 'Gunung & Sungai (Gunung+Sungai)' },
-        { romaji: 'jinkou', char: '人口', meaning: 'Populasi (Orang+Mulut)' },
+        { romaji: 'jinkou', char: '人口', maeaning: 'Populasi (Orang+Mulut)' },
         { romaji: 'chika', char: '地下', meaning: 'Bawah Tanah (Bawah+Tanah)' },
         { romaji: 'ninki', char: '人気', meaning: 'Populer (Orang+Energi)' }
       ]

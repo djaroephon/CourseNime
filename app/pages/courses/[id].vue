@@ -115,6 +115,9 @@
         <div class="flex-grow bg-gray-200 h-4 rounded-full overflow-hidden">
           <div class="bg-green-500 h-full transition-all duration-500 ease-out" :style="{ width: `${progressPercentage}%` }"></div>
         </div>
+        <div v-if="viewMode === 'exam'" class="font-mono text-xl font-bold text-red-500 bg-red-50 px-3 py-1 rounded-lg border border-red-200 whitespace-nowrap">
+          ⏱ {{ formattedExamTime }}
+        </div>
       </div>
 
       <div class="flex-grow container mx-auto px-4 max-w-3xl flex flex-col justify-center pb-32">
@@ -261,7 +264,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -325,10 +328,47 @@ const openMaterial = (stage) => {
   viewMode.value = 'material'
 }
 
+const examTimeLeft = ref(20 * 60)
+let examTimer = null
+
+const formattedExamTime = computed(() => {
+  const m = Math.floor(examTimeLeft.value / 60)
+  const s = examTimeLeft.value % 60
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+})
+
+const clearExamTimer = () => {
+  if (examTimer) {
+    clearInterval(examTimer)
+    examTimer = null
+  }
+}
+
+onBeforeUnmount(() => {
+  clearExamTimer()
+})
+
+const finishExamTimeOut = async () => {
+  clearExamTimer()
+  await saveResultToSupabase()
+  viewMode.value = 'finished'
+}
+
 const openExam = () => {
   currentStage.value = null
   viewMode.value = 'exam'
   questions.value = generateQuestions(course.value.stages.flatMap(s => s.material))
+  
+  examTimeLeft.value = 20 * 60
+  clearExamTimer()
+  examTimer = setInterval(() => {
+    if (examTimeLeft.value > 0) {
+      examTimeLeft.value--
+    } else {
+      finishExamTimeOut()
+    }
+  }, 1000)
+  
   startQuizProcess()
 }
 
@@ -339,6 +379,7 @@ const startQuiz = () => {
 }
 
 const backToMenu = async () => {
+  clearExamTimer()
   await refreshProgress()
   viewMode.value = 'menu'
   currentStage.value = null
@@ -593,6 +634,7 @@ const nextQuestion = async () => {
     currentIndex.value++
     setupQuestionState()
   } else {
+    clearExamTimer()
     await saveResultToSupabase()
     viewMode.value = 'finished'
   }
